@@ -21,5 +21,10 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+
+      <meta-data
+      android:name="com.google.android.maps.v2.API_KEY"
+      android:value="AIzaSyDoNKeY4ZDwL7Z0W93wDMha9MwXyoBKsVg" />
     </application>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 </manifest>
