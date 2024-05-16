@@ -1,0 +1,47 @@
+type User
+  @model
+  @auth(rules: [{allow: private, provider: userPools, operations: [read]}, {allow: owner}]) {
+  id: ID!
+  username: String!
+  email: String!
+
+  # car: Car @hasOne(fields: ["id"])
+
+  orders: [Order] @hasMany(indexName: "byUser", fields: ["id"])
+}
+
+type Car
+  @model
+  @auth(rules: [{allow: owner, operations: [create, update, delete, read]}]) {
+  id: ID!
+  type: String!
+  latitude: Float
+  longitude: Float
+  heading: Float
+  isActive: Boolean
+
+  userId: ID!
+  user: User @hasOne(fields: ["userId"])
+
+  # orders: [Order] @hasMany(fields: ["id"])
+}
+
+type Order @model @auth(rules: [{allow: private, provider: userPools}]) {
+  id: ID!
+
+  type: String!
+  status: String
+  createdAt: String!
+
+  originLatitude: Float!
+  originLongitude: Float!
+
+  destLatitude: Float!
+  destLongitude: Float!
+
+  userId: ID! @index(name: "byUser", sortKeyFields: ["createdAt"])
+  user: User @belongsTo(fields: ["userId"])
+
+  carId: ID!
+  car: Car @hasOne(fields: ["carId"])
+}

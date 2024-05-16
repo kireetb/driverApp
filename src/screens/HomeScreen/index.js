@@ -1,4 +1,4 @@
-import React, {useState, useEffect, version} from 'react';
+import React, {useState, useEffect, version, useRef} from 'react';
 import {View, Text, Dimensions, Pressable} from 'react-native';
 import MapView, {PROVIDER_GOOGLE} from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
@@ -26,6 +26,7 @@ const HomeScreen = () => {
   const [myPosition, setMyPosition] = useState(null);
   const [order, setOrder] = useState(null);
   const [newOrders, setNewOrders] = useState([]);
+  const mapViewRef = useRef(null);
 
   const fetchCar = async () => {
     try {
@@ -51,12 +52,11 @@ const HomeScreen = () => {
     try {
       const ordersData = await client.graphql({
         query: listOrders,
-        variables: {filter: {status: {eq: 'New'}}, type: {eq: car.type}},
+        variables: {filter: {status: {eq: 'NEW'}}, type: {eq: car.type}},
       });
       setNewOrders(ordersData.data.listOrders.items);
-      // console.log(ordersData.data);
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   };
 
@@ -67,24 +67,21 @@ const HomeScreen = () => {
 
   const onDecline = () => {
     // setNewOrders(newOrders.slice(1));
-    console.warn('Unset order');
     // Unset new orders to allow rerender and set car state
     setNewOrders([]);
-    // console.log(car);
     // Unset new orders to allow rerender and set car state
   };
 
   // Done
   const onAccept = async newOrder => {
     try {
-      console.log(newOrder);
-      console.log(car);
       const variables = {
         input: {
-          id: newOrder.id,
-          userId: newOrder.userId,
           carId: car.id,
           status: 'PICKING_UP_CLIENT',
+          id: newOrder.id,
+          userId: newOrder.userId,
+          type: car.type,
         },
       };
       const updateOrderData = await client.graphql({
@@ -93,11 +90,11 @@ const HomeScreen = () => {
       });
       setOrder(updateOrderData.data.updateOrder);
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
 
-    // what is this????
-    setNewOrders(newOrders.slice(1));
+    // Pick only 1 order out of the muliple orders to server
+    // setNewOrders(newOrders.slice(1));
   };
 
   const onGoPress = async () => {
@@ -123,7 +120,6 @@ const HomeScreen = () => {
 
   const onUserLocationChange = async event => {
     const {latitude, longitude, heading} = event.nativeEvent.coordinate;
-    // console.log(event.nativeEvent.coordinate);
     // Update the car and set it to active
     try {
       const userData = await fetchUserAttributes();
@@ -147,7 +143,10 @@ const HomeScreen = () => {
   };
 
   const onDirectionFound = event => {
-    console.log('Direction found: ', event);
+    console.log('Direction found:');
+    // ??? get username from orders table using the model relationship
+    console.log(order);
+    console.log(car);
     if (order) {
       setOrder({
         ...order,
@@ -155,6 +154,10 @@ const HomeScreen = () => {
         duration: event.duration,
         pickedUp: order.pickedUp || event.distance < 0.2,
         isFinished: order.pickedUp && event.distance < 0.2,
+      });
+      mapViewRef.current.fitToCoordinates(event.coordinates, {
+        edgePadding: {top: 50, right: 50, bottom: 50, left: 50},
+        animated: true,
       });
     }
   };
@@ -198,7 +201,7 @@ const HomeScreen = () => {
       return (
         <View style={{alignItems: 'center'}}>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Text>{order.duration ? order.duration.toFixed(1) : '?'} min</Text>
+            <Text style={{color: 'black'}}>{order.duration ? order.duration.toFixed(1) : '?'} min</Text>
             <View
               style={{
                 backgroundColor: '#d41212',
@@ -211,7 +214,7 @@ const HomeScreen = () => {
               }}>
               <FontAwesome name={'user'} color={'white'} size={20} />
             </View>
-            <Text>{order.distance ? order.distance.toFixed(1) : '?'} km</Text>
+            <Text style={{color: 'black'}}>{order.distance ? order.distance.toFixed(1) : '?'} km</Text>
           </View>
           <Text style={styles.bottomText}>
             Dropping off {order?.user?.username}
@@ -224,7 +227,7 @@ const HomeScreen = () => {
       return (
         <View style={{alignItems: 'center'}}>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Text>{order.duration ? order.duration.toFixed(1) : '?'} min</Text>
+            <Text style={{color: 'black'}}>{order.duration ? order.duration.toFixed(1) : '?'} min</Text>
             <View
               style={{
                 backgroundColor: '#1e9203',
@@ -237,7 +240,8 @@ const HomeScreen = () => {
               }}>
               <FontAwesome name={'user'} color={'white'} size={20} />
             </View>
-            <Text>{order.distance ? order.distance.toFixed(1) : '?'} km</Text>
+            <Text style={{color: 'black'}}>{order.distance ? order.distance.toFixed(1) : '?'} km</Text>
+            {/* <Text style={{color: 'black'}}> km</Text> */}
           </View>
           <Text style={styles.bottomText}>
             Picking up {order?.user?.username}
@@ -254,6 +258,7 @@ const HomeScreen = () => {
   return (
     <View>
       <MapView
+        ref={mapViewRef}
         style={{width: '100%', height: Dimensions.get('window').height - 150}}
         provider={PROVIDER_GOOGLE}
         showsUserLocation={!!car?.isActive}
@@ -267,14 +272,17 @@ const HomeScreen = () => {
         {order && (
           <MapViewDirections
             origin={{
-              latitude: car?.latitude,
-              longitude: car?.longitude,
+              latitude:  car?.latitude,
+              longitude:  car?.longitude,
             }}
             onReady={onDirectionFound}
             destination={getDestination()}
             apikey={GOOGLE_MAPS_APIKEY}
             strokeWidth={5}
             strokeColor="black"
+            onError={errorMessage => {
+              console.error(errorMessage);
+            }}
           />
         )}
       </MapView>

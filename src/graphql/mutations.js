@@ -53,6 +53,12 @@ export const updateOrder = /* GraphQL */ `
       userId
       carId
       updatedAt
+      user {
+        id
+        username
+        email
+        __typename
+      }
     }
   }
 `;

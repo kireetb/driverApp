@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "serviceConfiguration": {
+    "apiName": "uberreactnative",
+    "serviceName": "AppSync",
+    "defaultAuthType": {
+      "mode": "AMAZON_COGNITO_USER_POOLS",
+      "cognitoUserPoolId": "authuberreactnativeRG"
+    },
+    "additionalAuthTypes": [
+      {
+        "mode": "API_KEY",
+        "expirationTime": 7,
+        "apiKeyExpirationDate": "2024-05-14T15:21:53.752Z",
+        "keyDescription": "uber_dev_api_key"
+      },
+      {
+        "mode": "AWS_LAMBDA",
+        "lambdaFunction": "uberreactnativeRGPostConfirmation",
+        "ttlSeconds": "300"
+      }
+    ],
+    "conflictResolution": {}
+  }
+}

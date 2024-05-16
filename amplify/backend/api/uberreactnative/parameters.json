@@ -1,0 +1,12 @@
+{
+  "AppSyncApiName": "uberreactnative",
+  "DynamoDBBillingMode": "PAY_PER_REQUEST",
+  "DynamoDBEnableServerSideEncryption": false,
+  "AuthCognitoUserPoolId": {
+    "Fn::GetAtt": [
+      "authuberreactnativeRG",
+      "Outputs.UserPoolId"
+    ]
+  },
+  "AuthModeLastUpdated": "2024-05-07T15:22:10.423Z"
+}

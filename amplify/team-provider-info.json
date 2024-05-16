@@ -1,15 +1,27 @@
 {
-  "dev": {
+  "beta": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-driverapp-dev-e78b5-authRole",
-      "UnauthRoleArn": "arn:aws:iam::127719071935:role/amplify-driverapp-dev-e78b5-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::127719071935:role/amplify-driverapp-dev-e78b5-authRole",
+      "AuthRoleName": "amplify-uberreactnative-beta-7063b-authRole",
+      "UnauthRoleArn": "arn:aws:iam::127719071935:role/amplify-uberreactnative-beta-7063b-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::127719071935:role/amplify-uberreactnative-beta-7063b-authRole",
       "Region": "ca-central-1",
-      "DeploymentBucketName": "amplify-driverapp-dev-e78b5-deployment",
-      "UnauthRoleName": "amplify-driverapp-dev-e78b5-unauthRole",
-      "StackName": "amplify-driverapp-dev-e78b5",
-      "StackId": "arn:aws:cloudformation:ca-central-1:127719071935:stack/amplify-driverapp-dev-e78b5/a08ec600-0e3d-11ef-9659-0e109dcdf37d",
-      "AmplifyAppId": "da6otnzpe5sf8"
+      "DeploymentBucketName": "amplify-uberreactnative-beta-7063b-deployment",
+      "UnauthRoleName": "amplify-uberreactnative-beta-7063b-unauthRole",
+      "StackName": "amplify-uberreactnative-beta-7063b",
+      "StackId": "arn:aws:cloudformation:ca-central-1:127719071935:stack/amplify-uberreactnative-beta-7063b/092bc960-1221-11ef-ac0e-062bfc98acf9",
+      "AmplifyAppId": "dywr4tgwdwm2r",
+      "AuthTriggerTemplateURL": "https://s3.amazonaws.com/amplify-uberreactnative-beta-7063b-deployment/amplify-cfn-templates/auth/auth-trigger-cloudformation-template.json"
+    },
+    "categories": {
+      "auth": {
+        "uberreactnativeRG": {}
+      },
+      "function": {
+        "uberreactnativeRGPostConfirmation": {
+          "deploymentBucketName": "amplify-uberreactnative-beta-7063b-deployment",
+          "s3Key": "amplify-builds/uberreactnativeRGPostConfirmation-592f707874733358502f-build.zip"
+        }
+      }
     }
   }
 }
