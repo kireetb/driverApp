@@ -5,7 +5,7 @@ type User
   username: String!
   email: String!
 
-  # car: Car @hasOne(fields: ["id"])
+  car: Car @hasOne(fields: ["id"])
 
   orders: [Order] @hasMany(indexName: "byUser", fields: ["id"])
 }
@@ -21,7 +21,7 @@ type Car
   isActive: Boolean
 
   userId: ID!
-  user: User @hasOne(fields: ["userId"])
+  user: User @belongsTo(fields: ["userId"])
 
   # orders: [Order] @hasMany(fields: ["id"])
 }
@@ -44,4 +44,17 @@ type Order @model @auth(rules: [{allow: private, provider: userPools}]) {
 
   carId: ID!
   car: Car @hasOne(fields: ["carId"])
+}
+
+type Post @model @auth(rules: [{allow: private, provider: userPools}]){
+  id: ID!
+  title: String!
+  comments: [Comment] @hasMany(indexName: "byPost", fields: ["id"])
+}
+
+type Comment @model @auth(rules: [{allow: private, provider: userPools}]){
+  id: ID!
+  postID: ID! @index(name: "byPost", sortKeyFields: ["content"])
+  content: String!
+  post: Post @belongsTo(fields: ["postID"])
 }

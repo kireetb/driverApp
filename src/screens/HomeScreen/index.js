@@ -14,7 +14,7 @@ const client = generateClient();
 import {fetchUserAttributes} from 'aws-amplify/auth';
 // Updated code
 
-import {listCars, listOrders} from '../../graphql/queries';
+import {listCars, listOrders, getCar} from '../../graphql/queries';
 import {updateCar, updateOrder} from '../../graphql/mutations';
 
 const origin = {latitude: 28.450927, longitude: -16.260845};
@@ -27,22 +27,20 @@ const HomeScreen = () => {
   const [order, setOrder] = useState(null);
   const [newOrders, setNewOrders] = useState([]);
   const mapViewRef = useRef(null);
+  const [acceptDuration, setacceptDuration] = useState();
+  const [acceptDistance, setacceptDistance] = useState();
 
   const fetchCar = async () => {
     try {
       // Updated code
       const userData = await fetchUserAttributes();
-      const variables = {
-        filter: {
-          userId: {eq: userData.sub},
-        },
-      };
+      const variables = {id: userData.sub};
       const carData = await client.graphql({
-        query: listCars,
+        query: getCar,
         variables: variables,
       });
       // Updated code, picking only first object so assuming the driver has only 1 car
-      setCar(carData.data.listCars.items[0]);
+      setCar(carData.data.getCar);
     } catch (e) {
       console.error(e);
     }
@@ -52,7 +50,7 @@ const HomeScreen = () => {
     try {
       const ordersData = await client.graphql({
         query: listOrders,
-        variables: {filter: {status: {eq: 'NEW'}}, type: {eq: car.type}},
+        variables: {filter: {status: {eq: 'NEW'}, type: {eq: car.type}}},
       });
       setNewOrders(ordersData.data.listOrders.items);
     } catch (e) {
@@ -60,16 +58,47 @@ const HomeScreen = () => {
     }
   };
 
+  // Every time new orders update fetch car and update duration
   useEffect(() => {
     fetchCar();
-    fetchOrders();
-  }, []);
+    // show duration & distance to driver for acceptance/decline
+    if (newOrders.length > 0) {
+      calculateDuration();
+    }
+  }, [newOrders]);
+
+  const calculateDuration = async () => {
+    try {
+      const originCoordinates =
+        newOrders[0]?.originLatitude + ',' + newOrders[0]?.originLongitude;
+      const destCoordinates =
+        newOrders[0]?.destLatitude + ',' + newOrders[0]?.destLongitude;
+
+      const response = await fetch(
+        'https://maps.googleapis.com/maps/api/distancematrix/json?origins=' +
+          originCoordinates +
+          '&destinations=' +
+          destCoordinates +
+          '&key=' +
+          GOOGLE_MAPS_APIKEY,
+      );
+      const data = await response.json();
+
+      if (data.status === 'OK') {
+        const distanceText = data;
+        setacceptDuration(distanceText.rows[0].elements[0].duration.text);
+        setacceptDistance(distanceText.rows[0].elements[0].distance.text);
+      } else {
+        console.log('Failed to get duration');
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const onDecline = () => {
-    // setNewOrders(newOrders.slice(1));
-    // Unset new orders to allow rerender and set car state
-    setNewOrders([]);
-    // Unset new orders to allow rerender and set car state
+    // Decline the first object in array
+    setNewOrders(newOrders.slice(1));
   };
 
   // Done
@@ -99,6 +128,7 @@ const HomeScreen = () => {
 
   const onGoPress = async () => {
     // Update the car and set it to active
+
     try {
       const userData = await fetchUserAttributes();
       const variables = {
@@ -116,6 +146,8 @@ const HomeScreen = () => {
     } catch (e) {
       console.error(e);
     }
+
+    fetchOrders();
   };
 
   const onUserLocationChange = async event => {
@@ -201,7 +233,9 @@ const HomeScreen = () => {
       return (
         <View style={{alignItems: 'center'}}>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Text style={{color: 'black'}}>{order.duration ? order.duration.toFixed(1) : '?'} min</Text>
+            <Text style={{color: 'black'}}>
+              {order.duration ? order.duration.toFixed(1) : '?'} min
+            </Text>
             <View
               style={{
                 backgroundColor: '#d41212',
@@ -214,7 +248,9 @@ const HomeScreen = () => {
               }}>
               <FontAwesome name={'user'} color={'white'} size={20} />
             </View>
-            <Text style={{color: 'black'}}>{order.distance ? order.distance.toFixed(1) : '?'} km</Text>
+            <Text style={{color: 'black'}}>
+              {order.distance ? order.distance.toFixed(1) : '?'} km
+            </Text>
           </View>
           <Text style={styles.bottomText}>
             Dropping off {order?.user?.username}
@@ -227,7 +263,9 @@ const HomeScreen = () => {
       return (
         <View style={{alignItems: 'center'}}>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Text style={{color: 'black'}}>{order.duration ? order.duration.toFixed(1) : '?'} min</Text>
+            <Text style={{color: 'black'}}>
+              {order.duration ? order.duration.toFixed(1) : '?'} min
+            </Text>
             <View
               style={{
                 backgroundColor: '#1e9203',
@@ -240,7 +278,9 @@ const HomeScreen = () => {
               }}>
               <FontAwesome name={'user'} color={'white'} size={20} />
             </View>
-            <Text style={{color: 'black'}}>{order.distance ? order.distance.toFixed(1) : '?'} km</Text>
+            <Text style={{color: 'black'}}>
+              {order.distance ? order.distance.toFixed(1) : '?'} km
+            </Text>
             {/* <Text style={{color: 'black'}}> km</Text> */}
           </View>
           <Text style={styles.bottomText}>
@@ -272,8 +312,8 @@ const HomeScreen = () => {
         {order && (
           <MapViewDirections
             origin={{
-              latitude:  car?.latitude,
-              longitude:  car?.longitude,
+              latitude: car?.latitude,
+              longitude: car?.longitude,
             }}
             onReady={onDirectionFound}
             destination={getDestination()}
@@ -332,8 +372,8 @@ const HomeScreen = () => {
       {newOrders.length > 0 && !order && car?.isActive && (
         <NewOrderPopup
           newOrder={newOrders[0]}
-          duration={2}
-          distance={0.5}
+          duration={acceptDuration}
+          distance={acceptDistance}
           onDecline={onDecline}
           onAccept={() => onAccept(newOrders[0])}
         />

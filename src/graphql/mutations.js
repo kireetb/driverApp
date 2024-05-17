@@ -30,8 +30,19 @@ export const updateCar = /* GraphQL */ `
       heading
       isActive
       userId
+      user {
+        id
+        username
+        email
+        createdAt
+        updatedAt
+        owner
+        __typename
+      }
       createdAt
       updatedAt
+      owner
+      __typename
     }
   }
 `;

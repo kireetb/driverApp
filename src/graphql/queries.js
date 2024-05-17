@@ -7,6 +7,19 @@ export const getUser = /* GraphQL */ `
       id
       username
       email
+      car {
+        id
+        type
+        latitude
+        longitude
+        heading
+        isActive
+        userId
+        createdAt
+        updatedAt
+        owner
+        __typename
+      }
       orders {
         nextToken
         __typename
@@ -65,6 +78,16 @@ export const getCar = /* GraphQL */ `
     }
   }
 `;
+
+export const getCarId = /* GraphQL */ `
+  query GetCar($id: ID!) {
+    getCar(id: $id) {
+      id
+    }
+  }
+`;
+
+
 export const listCars = /* GraphQL */ `
   query ListCars(
     $filter: ModelCarFilterInput

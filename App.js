@@ -7,21 +7,34 @@
  */
 
 import React, {useEffect, useState} from 'react';
-import {SafeAreaView, StatusBar, PermissionsAndroid, Platform} from 'react-native';
+import {
+  SafeAreaView,
+  StatusBar,
+  PermissionsAndroid,
+  Platform,
+} from 'react-native';
 import HomeScreen from './src/screens/HomeScreen';
 import {Amplify} from 'aws-amplify';
-// import {withAuthenticator} from 'aws-amplify-react-native';
+import {generateClient} from 'aws-amplify/api';
+const client = generateClient();
+
 // Updated code
-import {withAuthenticator} from '@aws-amplify/ui-react-native';
+import {
+  withAuthenticator,
+  useAuthenticator,
+} from '@aws-amplify/ui-react-native';
 import {fetchUserAttributes} from 'aws-amplify/auth';
 // Update code
-import {getCarId} from './src/graphql/queries';
+import {getCarId, getUser} from './src/graphql/queries';
 import {createCar} from './src/graphql/mutations';
 
 import amplifyconfig from './src/amplifyconfiguration.json';
 Amplify.configure(amplifyconfig);
 
 function App() {
+  // Sign out user
+  // const { signOut } = useAuthenticator((context) => [context.user]);
+  // signOut();
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
 
@@ -37,14 +50,14 @@ function App() {
     updateUserCar();
   }, []);
 
-  let text = "Waiting..";
+  let text = 'Waiting..';
   if (errorMsg) {
     text = errorMsg;
     console.log(text);
   } else if (location) {
     // text contains the json object as string which contains the location details
     text = JSON.stringify(location);
-    console.log("Current Geolocation: ", text);
+    console.log('Current Geolocation: ', text);
   }
 
   const androidPermission = async () => {
@@ -52,24 +65,24 @@ function App() {
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         {
-          title: "Location Permission",
+          title: 'Location Permission',
           message:
-            "Uber App needs access to your location " +
-            "so you can take awesome rides.",
-          buttonNeutral: "Ask Me Later",
-          buttonNegative: "Cancel",
-          buttonPositive: "OK"
-        }
+            'Uber App needs access to your location ' +
+            'so you can take awesome rides.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
       );
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log("You can use the location");
+        console.log('You can use the location');
       } else {
-        console.log("Location permission denied");
+        console.log('Location permission denied');
       }
     } catch (err) {
       console.warn(err);
     }
-  }
+  };
 
   const updateUserCar = async () => {
     // Get authenticated user
@@ -80,25 +93,31 @@ function App() {
       return;
     }
 
-    // Check if the user has already a car
-    // const carData = await API.graphql(
-    //   graphqlOperation(getCarId, {id: authenticatedUser.sub}),
-    // );
+    //Check if the user already has a car
 
-    // if (!!carData.data.getCar) {
-    //   console.log('User already has a car assigned');
-    //   return;
-    // }
+    const carData = await client.graphql({
+      query: getCarId,
+      variables: {id: authenticatedUser.sub},
+    });
 
+    if (carData.data.getCar) {
+      console.log('User already has a car assigned');
+      return;
+    }
+    console.log('create new car');
     // If not, create a new car for the user
-    // const newCar = {
-    //   id: authenticatedUser.sub,
-    //   type: 'UberX',
-    //   userId: authenticatedUser.sub,
-    // };
-    // await API.graphql(graphqlOperation(createCar, {input: newCar}));
-  };
+    const newCar = {
+      id: authenticatedUser.sub,
+      type: 'UberX',
+      isActive: false,
+      userId: authenticatedUser.sub,
+    };
 
+    await client.graphql({
+      query: createCar,
+      variables: {input: newCar},
+    });
+  };
 
   return (
     <>
